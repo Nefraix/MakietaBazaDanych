@@ -106,28 +106,30 @@ def root():
             "commands": ["id", "name", "code"],
             "situations": ["id", "name", "code"]
         },
-        
+
         "example_requests": {
+        
+            
             "IQRF": {
-                "GET all": "curl -X GET http://<ip>:8040/iqrf",
-                "GET by ID": "curl -X GET http://<ip>:8040/iqrf/1",
-                "POST": "curl -X POST http://<ip>:8040/iqrf -H \"Content-Type: application/json\" -d '{\"id\": 1, \"group\": 1, \"description\": \"Example IQRF\"}'",
-                "DELETE": "curl -X DELETE http://<ip>:8040/iqrf/1"
+                "GET all": "curl -X GET http://ip:8040/iqrf",
+                "GET by ID": "curl -X GET http://ip:8040/iqrf/1",
+                "POST": "curl -X POST http://ip:8040/iqrf -H \"Content-Type: application/json\" -d {\"id\": 1, \"group\": 1, \"description\": \"Example IQRF\"}",
+                "DELETE": "curl -X DELETE http://ip:8040/iqrf/1"
             },
             "Groups": {
-                "GET all": "curl -X GET http://<ip>:8040/groups",
-                "GET by ID": "curl -X GET http://<ip>:8040/groups/1",
-                "POST": "curl -X POST http://<ip>:8040/groups -H \"Content-Type: application/json\" -d '{\"id\": 1, \"description\": \"Example Group\"}'",
-                "DELETE": "curl -X DELETE http://<ip>:8040/groups/1"
+                "GET all": "curl -X GET http://ip:8040/groups",
+                "GET by ID": "curl -X GET http://ip:8040/groups/1",
+                "POST": "curl -X POST http://ip:8040/groups -H \"Content-Type: application/json\" -d {\"id\": 1, \"description\": \"Example Group\"}",
+                "DELETE": "curl -X DELETE http://ip:8040/groups/1"
             },
             "Commands": {
-                "GET all": "curl -X GET http://<ip>:8040/commands",
-                "GET by ID": "curl -X GET http://<ip>:8040/commands/1"
+                "GET all": "curl -X GET http://ip:8040/commands",
+                "GET by ID": "curl -X GET http://ip:8040/commands/1"
             },
             "Situations": {
-                "GET all": "curl -X GET http://<ip>:8040/situations",
-                "GET by ID": "curl -X GET http://<ip>:8040/situations/1",
-                "GET by Code": "curl -X GET http://<ip>:8040/situations/by_code/XYZ"
+                "GET all": "curl -X GET http://ip:8040/situations",
+                "GET by ID": "curl -X GET http://ip:8040/situations/1",
+                "GET by Code": "curl -X GET http://ip:8040/situations/by_code/0001"
             }
         }
     }
