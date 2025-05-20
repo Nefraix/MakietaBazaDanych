@@ -1,5 +1,6 @@
 sudo apt-get install python3-pip 
-Pydantic, SQLAlchemy, uvicorn, SQLite3, FastAPI, typing
+sudo apt install
+pydantic, SQLAlchemy, uvicorn, SQLite3, FastAPI, typing
 
 Automatyczne uruchamianie skryptu przy każdym uruchomieniu (Usuwa dane z bazy!)
 {
@@ -54,4 +55,5 @@ curl -X POST http://192.168.1.190:8040/iqrf -H \
 curl -X POST http://192.168.1.190:8040/groups -H \
 "Content-Type: application/json" -d \
 '{"id": 19, "description": "Test"}'
+
 

@@ -15,30 +15,30 @@ def enable_foreign_keys(dbapi_connection, connection_record):
 ''' Listy IQRFów i Grup, stan domyślny bazy: '''
 
 iqrfs = [
-    IQRF(id=9999, group=1, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9998, group=2, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9997, group=2, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9996, group=4, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9995, group=7, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9994, group=9, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9993, group=10, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9992, group=9, description="Nie istnieje, rekord testowy"),
-    IQRF(id=9991, group=8, description="Nie istnieje, rekord testowy"),
-    IQRF(id=99980, group=8, description="Nie istnieje, rekord testowy")
+    IQRF(id=9999, group=99, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9998, group=2, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9997, group=2, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9996, group=4, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9995, group=7, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9994, group=9, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9993, group=10, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9992, group=9, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=9991, group=8, description="Nie istnieje, rekord testowy"),
+    #IQRF(id=99980, group=8, description="Nie istnieje, rekord testowy")
 ]
 
 groups = [
-    Group(id=0, description="Nie istnieje"),
-    Group(id=1, description="Nie istnieje"),
-    Group(id=2, description="Nie istnieje"),
-    Group(id=3, description="Nie istnieje"),
-    Group(id=4, description="Nie istnieje"),
-    Group(id=5, description="Nie istnieje"),
-    Group(id=6, description="Nie istnieje"),
-    Group(id=7, description="Nie istnieje"),
-    Group(id=8, description="Nie istnieje"),
-    Group(id=9, description="Nie istnieje"),
-    Group(id=10, description="Nie istnieje"),
+    #Group(id=0, description="Nie istnieje"),
+    #Group(id=1, description="Nie istnieje"),
+    #Group(id=2, description="Nie istnieje"),
+    #Group(id=3, description="Nie istnieje"),
+    #Group(id=4, description="Nie istnieje"),
+    #Group(id=5, description="Nie istnieje"),
+    #Group(id=6, description="Nie istnieje"),
+    #Group(id=7, description="Nie istnieje"),
+    #Group(id=8, description="Nie istnieje"),
+    #Group(id=9, description="Nie istnieje"),
+    Group(id=99, description="Nie istnieje"),
 ]
 
 commands = [
