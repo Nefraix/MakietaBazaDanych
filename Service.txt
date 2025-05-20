@@ -1,0 +1,16 @@
+/etc/systemd/system/fastapi.service
+
+change vars in [Service]
+
+[Unit]
+Description=FastAPI app
+After=network.target
+
+[Service]
+User=raspberry
+WorkingDirectory=/home/raspberry/MakietaBazaDanych
+ExecStart=/home/raspberry/MakietaBazaDanych/skrypt.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
