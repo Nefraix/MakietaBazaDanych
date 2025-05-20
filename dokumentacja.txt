@@ -1,0 +1,57 @@
+sudo apt-get install python3-pip 
+Pydantic, SQLAlchemy, uvicorn, SQLite3, FastAPI, typing
+
+Automatyczne uruchamianie skryptu przy każdym uruchomieniu (Usuwa dane z bazy!)
+{
+sudo nano /etc/systemd/system/fastapi.service
+w tym pliku "
+[Unit]
+Description=FastAPI app
+After=network.target
+
+[Service]
+User=raspberry
+WorkingDirectory=/home/raspberry/makieta
+ExecStart=/usr/bin/uvicorn fastapi_app:app --host 0.0.0.0 --port 8040
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+" 
+- User, WorkingDirectory i ExecStart dostowac do systemu
+user - whoami; Working - pwd do skryptu; ExecStart - which uvicorn
+
+Po ustawieniu tego w terminalu:
+
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable fastapi.service
+sudo systemctl start fastapi.service
+sudo systemctl status fastapi.service
+
+
+
+Żeby wyłączyc/włączyć SERWER: 
+sudo systemctl stop fastapi.service / sudo systemctl start fastapi.service
+
+Żeby wyłączyć/włączyc SERVICE (autoururuchamianie):
+sudo systemctl disable fastapi.service / sudo systemctl enable fastapi.service
+}
+
+
+Adresy przykładowe, sprawdz /Desktop/ po uruchomieniu skryptu żeby sprawdzić IP raspberry
+
+http://192.168.1.190:8040/groups/13
+http://192.168.1.190:8040/items
+http://192.168.1.190:8040/iqrf
+
+curl -X GET http://192.168.1.190:8040/groups/13
+curl -X POST http://192.168.1.190:8040/iqrf -H \
+"Content-Type: application/json" -d \
+'{"id": 1,"group": 1, "description": "Test"}'
+
+curl -X POST http://192.168.1.190:8040/groups -H \
+"Content-Type: application/json" -d \
+'{"id": 19, "description": "Test"}'
+

@@ -1,0 +1,38 @@
+@app.get("/")
+def root():
+    return {
+        "message": "Available endpoints:",
+        "routes": 
+            {
+            "IQRF": 
+                {
+                "GET all": "/iqrf",
+                "GET by ID": "/iqrf/{id}",
+                "POST": "/iqrf",
+                "DELETE": "/iqrf/{id}"
+                },
+            
+            "Groups": 
+                {
+                "GET all": "/groups",
+                "GET by ID": "/groups/{id}",
+                "POST": "/groups",
+                "DELETE": "/groups/{id}"
+                },
+            "Commands": 
+                {
+                "GET all": "/commands",
+                "GET by ID": "/commands/{id}",
+
+                },
+            "Situations": 
+                {
+                "GET all": "/situations",
+                "GET by ID": "/situations/{id}",
+                "GET by Code": "/situations/by_code/{code}"
+                }
+            }    
+
+            
+        
+    }
