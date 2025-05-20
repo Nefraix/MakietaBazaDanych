@@ -15,7 +15,10 @@ Base = declarative_base()
 class IQRF(Base):
     __tablename__ = "iqrf"
     id = Column(Integer, primary_key=True, index=False)
-    group = Column(Integer, ForeignKey("groups.id"), nullable=False)
+    group = Column(Integer, ForeignKey("groups.id"), nullable=False, default=0)
+    intersection = Column(Integer, ForeignKey("intersections.id"), nullable=False,default=5)
+    priority = Column(Integer, nullable=False, default=0) 
+    lights = Column(Integer, nullable=False, default=0)
     description = Column(String, nullable=True)
 
 class Group(Base):
@@ -34,3 +37,9 @@ class Situation(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     code = Column(String, nullable=True)
+    
+class Intersection(Base):
+    __tablename__ = "intersections"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    

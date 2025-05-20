@@ -1,5 +1,9 @@
 /etc/systemd/system/fastapi.service
 
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl restart fastapi.service
+
 change vars in [Service]
 
 [Unit]

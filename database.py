@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
-from models import Base, IQRF, Group, Command, Situation
+from models import Base, IQRF, Group, Command, Situation, Intersection
 
 DATABASE_URL = "sqlite:///./items.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -13,19 +13,6 @@ def enable_foreign_keys(dbapi_connection, connection_record):
     cursor.close()
 
 ''' Listy IQRFów i Grup, stan domyślny bazy: '''
-
-iqrfs = [
-    IQRF(id=9999, group=99, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9998, group=2, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9997, group=2, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9996, group=4, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9995, group=7, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9994, group=9, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9993, group=10, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9992, group=9, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=9991, group=8, description="Nie istnieje, rekord testowy"),
-    #IQRF(id=99980, group=8, description="Nie istnieje, rekord testowy")
-]
 
 groups = [
     #Group(id=0, description="Nie istnieje"),
@@ -58,15 +45,15 @@ situations = [
     Situation(id=1, name="Droga prosta", code="0001"),
     Situation(id=2, name="Łuk", code="0002"),
     # Skrzyżowanie potrójne
-    Situation(id=3, name="Skrzyżowanie potrójne Zjazd nr.1 ", code="0003"),
-    Situation(id=4, name="Skrzyżowanie potrójne Zjazd nr.2", code="0004"),
-    Situation(id=5, name="Skrzyżowanie potrójne Zjazd nr.3", code="0005"),
-    Situation(id=6, name="Skrzyżowanie potrójne Zjazd nr.4", code="0006"),
+    Situation(id=3, name="Skrzyzowanie potrojne Zjazd nr.1 ", code="0003"),
+    Situation(id=4, name="Skrzyzowanie potrojne Zjazd nr.2", code="0004"),
+    Situation(id=5, name="Skrzyzowanie potrojne Zjazd nr.3", code="0005"),
+    Situation(id=6, name="Skrzyzowanie potrojne Zjazd nr.4", code="0006"),
     # Skrzyżowanie poczwórne
-    Situation(id=7, name="Skrzyżowanie poczwórne Zjazd nr.1", code="0007"),
-    Situation(id=8, name="Skrzyżowanie poczwórne Zjazd nr.2", code="0008"),
-    Situation(id=9, name="Skrzyżowanie poczwórne Zjazd nr.3", code="0009"),
-    Situation(id=10, name="Skrzyżowanie poczwórne Zjazd nr.4", code="000A"),
+    Situation(id=7, name="Skrzyzowanie poczworne Zjazd nr.1", code="0007"),
+    Situation(id=8, name="Skrzyzowanie poczworne Zjazd nr.2", code="0008"),
+    Situation(id=9, name="Skrzyzowanie poczworne Zjazd nr.3", code="0009"),
+    Situation(id=10, name="Skrzyzowanie poczworne Zjazd nr.4", code="000A"),
     # Miejsca parkingowe
     Situation(id=11, name="Miejsce parkingowe 1", code="000B"),
     Situation(id=12, name="Miejsce parkingowe 2", code="000C"),
@@ -79,16 +66,32 @@ situations = [
     Situation(id=19, name="Miejsce parkingowe 9", code="0013"),
     Situation(id=20, name="Miejsce parkingowe 10", code="0014"),
     # Rondo potrójne
-    Situation(id=21, name="Rondo potrójne Zjazd nr.1 ", code="0015"),
-    Situation(id=22, name="Rondo potrójne Zjazd nr.2", code="0016"),
-    Situation(id=23, name="Rondo potrójne Zjazd nr.3", code="0017"),
-    Situation(id=24, name="Rondo potrójne Zjazd nr.4", code="0018"),
+    Situation(id=21, name="Rondo potrojne Zjazd nr.1", code="0015"),
+    Situation(id=22, name="Rondo potrojne Zjazd nr.2", code="0016"),
+    Situation(id=23, name="Rondo potrojne Zjazd nr.3", code="0017"),
+    Situation(id=24, name="Rondo potrojne Zjazd nr.4", code="0018"),
     # Rondo poczwórne
-    Situation(id=25, name="Rondo potrójne Zjazd nr.1", code="0019"),
-    Situation(id=26, name="Rondo potrójne Zjazd nr.2", code="001A"),
-    Situation(id=27, name="Rondo potrójne Zjazd nr.3", code="001B"),
-    Situation(id=28, name="Rondo potrójne Zjazd nr.4", code="001C"),
+    Situation(id=25, name="Rondo poczworne Zjazd nr.1", code="0019"),
+    Situation(id=26, name="Rondo poczworne Zjazd nr.2", code="001A"),
+    Situation(id=27, name="Rondo poczworne Zjazd nr.3", code="001B"),
+    Situation(id=28, name="Rondo poczworne Zjazd nr.4", code="001C"),
 ]
+
+intersections = [
+    Intersection(id = 0, name="Skrzyzowanie potrojne"),
+    Intersection(id = 1, name="Skrzyzowanie poczworne"),
+    Intersection(id = 2, name="Rondo potrojne"),
+    Intersection(id = 3, name="Rondo poczworne"),
+    Intersection(id = 99, name="TEST testowy"),
+]
+
+
+iqrfs = [
+    IQRF(id=9999, group=99,intersection=99,priority=1,lights=0, description="Nie istnieje, rekord testowy"),
+    IQRF(id=9998, group=99,intersection=99, priority=5,lights=0, description="Nie istnieje, rekord testowy"),
+
+]
+
 def init_db():
     
     "Uncomment to generate DB from 0 using above cells"
@@ -102,14 +105,17 @@ def init_db():
     if not db.query(Group).first():
         db.add_all(groups)
 
-    if not db.query(IQRF).first():
-        db.add_all(iqrfs)
+    if not db.query(Intersection).first():
+        db.add_all(intersections)
         
     if not db.query(Command).first():
         db.add_all(commands)
     
     if not db.query(Situation).first():
         db.add_all(situations)
+        
+    if not db.query(IQRF).first():
+        db.add_all(iqrfs)
         
     db.commit()
     db.close()

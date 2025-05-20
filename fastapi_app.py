@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import IntegrityError
 
-from models import Base, IQRF, Group, Situation, Command
+from models import Base, IQRF, Group, Situation, Command, Intersection
 from database import SessionLocal, init_db
 
 
@@ -22,11 +22,17 @@ init_db()
 class IQRFCreate(BaseModel):
     id: int
     group: int
+    intersection: Optional[int] = 5
+    priority: Optional[int] = 0
+    lights: Optional[int] = 0
     description: Optional[str] = None
     
 class IQRFOut(BaseModel):
     id: int
     group: int
+    intersection: int
+    priority: Optional[int] = 5
+    lights: Optional[int] = 0
     description: Optional[str] = None
     class Config:
         orm_mode = True
@@ -46,6 +52,39 @@ class GroupWithIQRF(BaseModel):
     id: int
     description: Optional[str] = None
     iqrf_devices: List[IQRFOut]  # 🔗 nested IQRF entries
+
+    class Config:
+        orm_mode = True
+
+" ---------- Pydantic Intersection ----------"
+
+
+class IntersectionOut(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        orm_mode = True
+
+class IntersectionWithIQRF(BaseModel):
+    id: int
+    name: str
+    iqrf_devices: List[IQRFOut]
+
+    class Config:
+        orm_mode = True
+        
+        
+class IntersectionCreate(BaseModel):
+    id: int
+    name:str
+    class Config:
+        orm_mode = True
+        
+class IntersectionWithIQRF(BaseModel):
+    id: int
+    name: str
+    iqrf_devices: List[IQRFOut]
 
     class Config:
         orm_mode = True
@@ -97,39 +136,54 @@ def root():
                 "GET all": "/situations",
                 "GET by ID": "/situations/{id}",
                 "GET by Code": "/situations/by_code/{code}"
+            },
+            "Intersections": {
+                "GET all": "/intersections",
+                "GET by ID": "/intersections/{id}",
+                "POST": "/intersections",
+                "DELETE": "/intersections/{id}"
+            },
+            "Config": {
+                "GET": "/config"
             }
         },
-        
         "schemas": {
-            "iqrf": ["id", "group //Foreign Key from groups/id", "description"],
+            "iqrf": ["id", "group (groups.id)","intersection (intersections.id)", "priority", "lights", "description"],
             "groups": ["id", "description"],
             "commands": ["id", "name", "code"],
-            "situations": ["id", "name", "code"]
+            "situations": ["id", "name", "code"],
+            "intersections": ["id", "name"]
         },
-
         "example_requests": {
-        
-            
             "IQRF": {
-                "GET all": "curl -X GET http://ip:8040/iqrf",
-                "GET by ID": "curl -X GET http://ip:8040/iqrf/1",
-                "POST": "curl -X POST http://ip:8040/iqrf -H \"Content-Type: application/json\" -d {\"id\": 1, \"group\": 1, \"description\": \"Example IQRF\"}",
-                "DELETE": "curl -X DELETE http://ip:8040/iqrf/1"
+                "GET all": "curl -X GET http://192.168.1.100:8040/iqrf",
+                "GET by ID": "curl -X GET http://192.168.1.100:8040/iqrf/1",
+                "POST": "curl -X POST http://192.168.1.100:8040/iqrf -H \"Content-Type: application/json\" -d '{\"id\": 1, \"group\": 1, \"intersection\": 5, \"priority\": 0, \"lights\": 0, \"description\": \"Example IQRF\"}'",
+                "DELETE": "curl -X DELETE http://192.168.1.100:8040/iqrf/1"
             },
             "Groups": {
-                "GET all": "curl -X GET http://ip:8040/groups",
-                "GET by ID": "curl -X GET http://ip:8040/groups/1",
-                "POST": "curl -X POST http://ip:8040/groups -H \"Content-Type: application/json\" -d {\"id\": 1, \"description\": \"Example Group\"}",
-                "DELETE": "curl -X DELETE http://ip:8040/groups/1"
+                "GET all": "curl -X GET http://192.168.1.100:8040/groups",
+                "GET by ID": "curl -X GET http://192.168.1.100:8040/groups/1",
+                "POST": "curl -X POST http://192.168.1.100:8040/groups -H \"Content-Type: application/json\" -d '{\"id\": 1, \"description\": \"Example Group\"}'",
+                "DELETE": "curl -X DELETE http://192.168.1.100:8040/groups/1"
             },
             "Commands": {
-                "GET all": "curl -X GET http://ip:8040/commands",
-                "GET by ID": "curl -X GET http://ip:8040/commands/1"
+                "GET all": "curl -X GET http://192.168.1.100:8040/commands",
+                "GET by ID": "curl -X GET http://192.168.1.100:8040/commands/1"
             },
             "Situations": {
-                "GET all": "curl -X GET http://ip:8040/situations",
-                "GET by ID": "curl -X GET http://ip:8040/situations/1",
-                "GET by Code": "curl -X GET http://ip:8040/situations/by_code/0001"
+                "GET all": "curl -X GET http://192.168.1.100:8040/situations",
+                "GET by ID": "curl -X GET http://192.168.1.100:8040/situations/1",
+                "GET by Code": "curl -X GET http://192.168.1.100:8040/situations/by_code/0001"
+            },
+            "Intersections": {
+                "GET all": "curl -X GET http://192.168.1.100:8040/intersections",
+                "GET by ID": "curl -X GET http://192.168.1.100:8040/intersections/1",
+                "POST": "curl -X POST http://192.168.1.100:8040/intersections -H \"Content-Type: application/json\" -d '{\"id\": 1, \"name\": \"Main Street\"}'",
+                "DELETE": "curl -X DELETE http://192.168.1.100:8040/intersections/1"
+            },
+            "Config": {
+                "GET": "curl -X GET http://192.168.1.100:8040/config"
             }
         }
     }
@@ -138,10 +192,11 @@ def root():
  
 # ---------- IQRF Endpoints ----------
 
+
 @app.post("/iqrf", response_model=IQRFOut)
 def create_iqrf(iqrf: IQRFCreate):
     db = SessionLocal()
-    db_iqrf = IQRF(id=iqrf.id, group=iqrf.group, description=iqrf.description)
+    db_iqrf = IQRF(id=iqrf.id, group=iqrf.group,intersection=iqrf.intersection, priority = iqrf.priority, description=iqrf.description)
     db.add(db_iqrf)
     db.commit()
     db.refresh(db_iqrf)
@@ -175,7 +230,10 @@ def delete_iqrf(iqrf_id: int):
     db.commit()
     db.close()
     return {"message": f"IQRF item with id {iqrf_id} deleted"}
+    
+    
 # ---------- Group Endpoints ----------
+
 
 @app.post("/groups", response_model=GroupOut)
 def create_group(group: GroupCreate):
@@ -224,6 +282,8 @@ def delete_group(group_id: int):
     db.commit()
     db.close()
     return {"message": f"Group with id {group_id} deleted"}
+    
+    
 # ---------- Command Endpoints ----------
 
 @app.get("/commands", response_model=List[CommandOut])
@@ -242,7 +302,9 @@ def get_command_by_id(command_id: int):
         raise HTTPException(status_code=404, detail="Situation not found")
     return situation
 
+
 # ---------- Situation Endpoints ----------
+
 
 @app.get("/situations", response_model=List[SituationOut])
 def get_all_situations():
@@ -269,7 +331,95 @@ def get_situation_by_code(code: str):
         raise HTTPException(status_code=404, detail="Situation not found for given code")
     return situation
 
+
+# ---------- Intersection Endpoints ----------
+
+
+@app.get("/intersections", response_model=List[IntersectionOut])
+def get_all_intersections():
+    db: Session = SessionLocal()
+    intersections = db.query(Intersection).all()
+    db.close()
+    return intersections
+
+@app.get("/intersections/{intersection_id}", response_model=IntersectionWithIQRF)
+def get_intersection_by_id(intersection_id: int):
+    db: Session = SessionLocal()
+    
+    # Get the intersection
+    intersection = db.query(Intersection).filter(Intersection.id == intersection_id).first()
+    if not intersection:
+        db.close()
+        raise HTTPException(status_code=404, detail="Intersection not found")
+    
+    # Get related IQRF devices
+    iqrf_list = db.query(IQRF).filter(IQRF.intersection == intersection_id).all()
+    
+    db.close()
+    
+    return {
+        "id": intersection.id,
+        "name": intersection.name,
+        "iqrf_devices": iqrf_list
+    }
+    
+@app.post("/intersections", response_model=IntersectionOut)
+def create_intersection(intersection: IntersectionCreate):
+    db: Session = SessionLocal()
+    db_intersection = Intersection(id=intersection.id, name=intersection.name)
+    db.add(db_intersection)
+    db.commit()
+    db.refresh(db_intersection)
+    db.close()
+    return db_intersection
+
+@app.delete("/intersections/{intersection_id}")
+def delete_intersection(intersection_id: int):
+    db: Session = SessionLocal()
+    intersection = db.query(Intersection).filter(Intersection.id == intersection_id).first()
+    if not intersection:
+        db.close()
+        raise HTTPException(status_code=404, detail="Intersection not found")
+    db.delete(intersection)
+    db.commit()
+    db.close()
+    return {"message": f"Intersection with id {intersection_id} deleted"}
+
+
+# --- CONFIG---
+
+
+@app.get("/config")
+def get_config():
+    db: Session = SessionLocal()
+
+    # Get all intersections
+    intersections = db.query(Intersection).all()
+
+    # Map each intersection with related IQRFs
+    intersections_with_iqrf = []
+    for intersection in intersections:
+        related_iqrf = db.query(IQRF).filter(IQRF.intersection == intersection.id).all()
+        intersections_with_iqrf.append({
+            "id": intersection.id,
+            "name": intersection.name,
+            "iqrf_devices": related_iqrf
+        })
+
+    # Get all IQRFs
+    all_iqrf = db.query(IQRF).all()
+
+    db.close()
+
+    return {
+        "intersections": intersections_with_iqrf,
+        "all_iqrf": all_iqrf
+    }
+
+
 # --- Exception handler --- 
+
+
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError):
     if "FOREIGN KEY constraint failed" in str(exc.orig):
