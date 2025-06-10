@@ -12,6 +12,11 @@ from starlette.responses import Response
 import logging
 import time
 import os
+from logLogger import LoggingMiddleware
+
+from models import Base, IQRF, Group, Situation, Command, Intersection
+from schemas import *
+from database import SessionLocal, init_db
 
 os.makedirs("logs", exist_ok=True)
 
@@ -22,53 +27,8 @@ if os.path.exists(log_file_path):
     os.remove(log_file_path)
 
 
-from models import Base, IQRF, Group, Situation, Command, Intersection
-from schemas import *
-from database import SessionLocal, init_db
 
-# Set up logger
-logger = logging.getLogger("app_logger")
-logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler(log_file_path)
-formatter = logging.Formatter('%(asctime)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
 
-class LoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        start_time = time.time()
-        try:
-            response = await call_next(request)
-            # Try reading the response body (requires capturing it first)
-            response_body = b""
-            async for chunk in response.body_iterator:
-                response_body += chunk
-            # Clone new response to preserve original output
-            new_response = Response(
-                content=response_body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.media_type
-            )
-
-            duration = time.time() - start_time
-            msg = f"{request.method} {request.url.path} -> Status: {response.status_code} - Duration: {duration:.3f}s"
-
-            # Try to extract error detail from response body
-            if response.status_code >= 400:
-                try:
-                    body_data = json.loads(response_body)
-                    if "detail" in body_data:
-                        msg += f" - Detail: {body_data['detail']}"
-                except Exception:
-                    pass  # In case body isn't JSON
-
-            logger.info(msg)
-            return new_response
-
-        except Exception as e:
-            logger.error(f"Unhandled error in middleware: {e}")
-            raise e
         
 tags_metadata = [
     {
