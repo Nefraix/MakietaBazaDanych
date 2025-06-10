@@ -137,16 +137,23 @@ def create_or_overwrite_iqrf(iqrf: IQRFCreate):
     try:
         existing_iqrf = db.query(IQRF).filter(IQRF.id == iqrf.id).first()
 
+        # Delete any other IQRF with same intersection and priority
+        conflicting = db.query(IQRF).filter(
+            IQRF.intersection == iqrf.intersection,
+            IQRF.priority == iqrf.priority,
+            IQRF.id != iqrf.id
+        ).first()
+        if conflicting:
+            db.delete(conflicting)
+
         if existing_iqrf:
-            # Update existing record
             existing_iqrf.group = iqrf.group
             existing_iqrf.intersection = iqrf.intersection
             existing_iqrf.priority = iqrf.priority
             existing_iqrf.lights = iqrf.lights
             existing_iqrf.description = iqrf.description
         else:
-            # Create new record
-            new_iqrf = IQRF(
+            existing_iqrf = IQRF(
                 id=iqrf.id,
                 group=iqrf.group,
                 intersection=iqrf.intersection,
@@ -154,8 +161,7 @@ def create_or_overwrite_iqrf(iqrf: IQRFCreate):
                 lights=iqrf.lights,
                 description=iqrf.description
             )
-            db.add(new_iqrf)
-            existing_iqrf = new_iqrf
+            db.add(existing_iqrf)
 
         db.commit()
         db.refresh(existing_iqrf)
@@ -164,14 +170,31 @@ def create_or_overwrite_iqrf(iqrf: IQRFCreate):
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(status_code=400, detail="Foreign key constraint failed. Ensure group and intersection exist.")
-    
+
     finally:
         db.close()
 
 @app.post("/post_iqrf", response_model=IQRFOut, tags=["iqrf"])
 def create_iqrf(iqrf: IQRFCreate):
     db = SessionLocal()
-    db_iqrf = IQRF(id=iqrf.id, group=iqrf.group,intersection=iqrf.intersection, priority = iqrf.priority, description=iqrf.description)
+    
+    # Delete any existing IQRF with the same intersection and priority (but different ID)
+    conflicting = db.query(IQRF).filter(
+        IQRF.intersection == iqrf.intersection,
+        IQRF.priority == iqrf.priority,
+        IQRF.id != iqrf.id
+    ).first()
+    if conflicting:
+        db.delete(conflicting)
+
+    db_iqrf = IQRF(
+        id=iqrf.id,
+        group=iqrf.group,
+        intersection=iqrf.intersection,
+        priority=iqrf.priority,
+        lights=iqrf.lights,
+        description=iqrf.description
+    )
     db.add(db_iqrf)
     db.commit()
     db.refresh(db_iqrf)
