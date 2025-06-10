@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
@@ -7,107 +7,46 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import IntegrityError
 
 from models import Base, IQRF, Group, Situation, Command, Intersection
+from schemas import *
 from database import SessionLocal, init_db
 
+tags_metadata = [
+    {
+        "name": "iqrf",
+        "description": "Individual IQRF nodes",
+    },
+    {
+        "name": "intersections",
+        "description": "individual intersections",
+    },
+    {
+        "name": "groups",
+        "description": "Groups of IQRFs",
+    },
+    {
+        "name": "commands",
+        "description": "commands that the car reads after scanning appropiate RFID tag",
+    },
+    {
+        "name": "situations",
+        "description": "Road situations with HEX codes",
+    },
 
-app = FastAPI()
+]
+
+
+app = FastAPI(
+    title="Smart Traffic Control API",
+    description="API for managing smart traffic infrastructure using IQRF communication technology.",
+    version="1.0.0",
+    openapi_tags=tags_metadata)
+
 
 
 init_db()
 
 
 
-" ---------- Pydantic IQRF ----------"
-
-class IQRFCreate(BaseModel):
-    id: int
-    group: int
-    intersection: Optional[int] = 5
-    priority: Optional[int] = 0
-    lights: Optional[int] = 0
-    description: Optional[str] = None
-    
-class IQRFOut(BaseModel):
-    id: int
-    group: int
-    intersection: int
-    priority: Optional[int] = 5
-    lights: Optional[int] = 0
-    description: Optional[str] = None
-    class Config:
-        orm_mode = True
-
-
-" ---------- Pydantic Group ----------"
-
-class GroupCreate(BaseModel):
-    id: int
-    description: Optional[str] = None
-
-class GroupOut(GroupCreate):
-    class Config:
-        orm_mode = True
-        
-class GroupWithIQRF(BaseModel):
-    id: int
-    description: Optional[str] = None
-    iqrf_devices: List[IQRFOut]  # 🔗 nested IQRF entries
-
-    class Config:
-        orm_mode = True
-
-" ---------- Pydantic Intersection ----------"
-
-
-class IntersectionOut(BaseModel):
-    id: int
-    name: str
-    
-    class Config:
-        orm_mode = True
-
-class IntersectionWithIQRF(BaseModel):
-    id: int
-    name: str
-    iqrf_devices: List[IQRFOut]
-
-    class Config:
-        orm_mode = True
-        
-        
-class IntersectionCreate(BaseModel):
-    id: int
-    name:str
-    class Config:
-        orm_mode = True
-        
-class IntersectionWithIQRF(BaseModel):
-    id: int
-    name: str
-    iqrf_devices: List[IQRFOut]
-
-    class Config:
-        orm_mode = True
-
-" ---------- Pydantic Command ----------"
-
-class CommandOut(BaseModel):
-    id: int
-    name: str
-    code: str
-    class Config:
-        orm_mode = True
-        
-" ---------- Pydantic Situation ----------"
-
-class SituationOut(BaseModel):
-    id: int
-    name: str
-    code: Optional[str]
-
-    class Config:
-        orm_mode = True
-        
 
 # ---------- Root Endpoint ----------
 "Used for getting all available endpoints"
@@ -192,8 +131,44 @@ def root():
  
 # ---------- IQRF Endpoints ----------
 
+@app.post("/post_iqrf_overwriting", response_model=IQRFOut, tags=["iqrf"])
+def create_or_overwrite_iqrf(iqrf: IQRFCreate):
+    db = SessionLocal()
+    try:
+        existing_iqrf = db.query(IQRF).filter(IQRF.id == iqrf.id).first()
 
-@app.post("/iqrf", response_model=IQRFOut)
+        if existing_iqrf:
+            # Update existing record
+            existing_iqrf.group = iqrf.group
+            existing_iqrf.intersection = iqrf.intersection
+            existing_iqrf.priority = iqrf.priority
+            existing_iqrf.lights = iqrf.lights
+            existing_iqrf.description = iqrf.description
+        else:
+            # Create new record
+            new_iqrf = IQRF(
+                id=iqrf.id,
+                group=iqrf.group,
+                intersection=iqrf.intersection,
+                priority=iqrf.priority,
+                lights=iqrf.lights,
+                description=iqrf.description
+            )
+            db.add(new_iqrf)
+            existing_iqrf = new_iqrf
+
+        db.commit()
+        db.refresh(existing_iqrf)
+        return existing_iqrf
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Foreign key constraint failed. Ensure group and intersection exist.")
+    
+    finally:
+        db.close()
+
+@app.post("/post_iqrf", response_model=IQRFOut, tags=["iqrf"])
 def create_iqrf(iqrf: IQRFCreate):
     db = SessionLocal()
     db_iqrf = IQRF(id=iqrf.id, group=iqrf.group,intersection=iqrf.intersection, priority = iqrf.priority, description=iqrf.description)
@@ -203,14 +178,14 @@ def create_iqrf(iqrf: IQRFCreate):
     db.close()
     return db_iqrf
 
-@app.get("/iqrf", response_model=List[IQRFOut])
+@app.get("/get_all_iqrfs", response_model=List[IQRFOut], tags=["iqrf"])
 def read_iqrf():
     db = SessionLocal()
     iqrf_list = db.query(IQRF).all()
     db.close()
     return iqrf_list
 
-@app.get("/iqrf/{iqrf_id}", response_model=IQRFOut)
+@app.get("/get_iqrf_byID/{iqrf_id}", response_model=IQRFOut, tags=["iqrf"])
 def read_iqrf_by_id(iqrf_id: int):
     db = SessionLocal()
     iqrf = db.query(IQRF).filter(IQRF.id == iqrf_id).first()
@@ -219,7 +194,7 @@ def read_iqrf_by_id(iqrf_id: int):
         raise HTTPException(status_code=404, detail="IQRF record not found")
     return iqrf
     
-@app.delete("/iqrf/{iqrf_id}")
+@app.delete("/delete_iqrf_byID/{iqrf_id}", tags=["iqrf"])
 def delete_iqrf(iqrf_id: int):
     db = SessionLocal()
     iqrf_item = db.query(IQRF).filter(IQRF.id == iqrf_id).first()
@@ -235,7 +210,7 @@ def delete_iqrf(iqrf_id: int):
 # ---------- Group Endpoints ----------
 
 
-@app.post("/groups", response_model=GroupOut)
+@app.post("/post_group", response_model=GroupOut, tags=["groups"])
 def create_group(group: GroupCreate):
     db = SessionLocal()
     db_group = Group(id=group.id, description=group.description)
@@ -245,14 +220,14 @@ def create_group(group: GroupCreate):
     db.close()
     return db_group
 
-@app.get("/groups", response_model=List[GroupOut])
+@app.get("/get_all_groups", response_model=List[GroupOut], tags=["groups"])
 def read_groups():
     db = SessionLocal()
     groups = db.query(Group).all()
     db.close()
     return groups
 
-@app.get("/groups/{group_id}", response_model=GroupWithIQRF)
+@app.get("/get_group_byID/{group_id}", response_model=GroupWithIQRF, tags=["groups"])
 def read_group_by_id(group_id: int):
     db = SessionLocal()
     group = db.query(Group).filter(Group.id == group_id).first()
@@ -271,7 +246,7 @@ def read_group_by_id(group_id: int):
         "iqrf_devices": iqrf_list
     }
     
-@app.delete("/groups/{group_id}")
+@app.delete("/delete_group_byID/{group_id}", tags=["groups"])
 def delete_group(group_id: int):
     db = SessionLocal()
     group = db.query(Group).filter(Group.id == group_id).first()
@@ -286,14 +261,14 @@ def delete_group(group_id: int):
     
 # ---------- Command Endpoints ----------
 
-@app.get("/commands", response_model=List[CommandOut])
+@app.get("/get_all_commands", response_model=List[CommandOut], tags=["commands"])
 def get_all_commands():
     db: Session = SessionLocal()
     commands = db.query(Command).all()
     db.close()
     return commands
     
-@app.get("/commands/{command_id}", response_model=CommandOut)
+@app.get("/get_command_byID/{command_id}", response_model=CommandOut, tags=["commands"])
 def get_command_by_id(command_id: int):
     db: Session = SessionLocal()
     command = db.query(Command).filter(Command.id == command_id).first()
@@ -306,14 +281,14 @@ def get_command_by_id(command_id: int):
 # ---------- Situation Endpoints ----------
 
 
-@app.get("/situations", response_model=List[SituationOut])
+@app.get("/get_all_situations", response_model=List[SituationOut], tags=["situations"])
 def get_all_situations():
     db: Session = SessionLocal()
     situations = db.query(Situation).all()
     db.close()
     return situations
     
-@app.get("/situations/{situation_id}", response_model=SituationOut)
+@app.get("/get_situation_byID/{situation_id}", response_model=SituationOut, tags=["situations"])
 def get_situation_by_id(situation_id: int):
     db: Session = SessionLocal()
     situation = db.query(Situation).filter(Situation.id == situation_id).first()
@@ -322,7 +297,7 @@ def get_situation_by_id(situation_id: int):
         raise HTTPException(status_code=404, detail="Situation not found")
     return situation
     
-@app.get("/situations/by_code/{code}", response_model=SituationOut)
+@app.get("/get_situation_byCODE/{code}", response_model=SituationOut, tags=["situations"])
 def get_situation_by_code(code: str):
     db: Session = SessionLocal()
     situation = db.query(Situation).filter(Situation.code == code).first()
@@ -333,16 +308,25 @@ def get_situation_by_code(code: str):
 
 
 # ---------- Intersection Endpoints ----------
+@app.post("/post_intersection", response_model=IntersectionOut, tags=["intersections"])
+def create_intersection(intersection: IntersectionCreate):
+    db: Session = SessionLocal()
+    db_intersection = Intersection(id=intersection.id, name=intersection.name)
+    db.add(db_intersection)
+    db.commit()
+    db.refresh(db_intersection)
+    db.close()
+    return db_intersection
 
 
-@app.get("/intersections", response_model=List[IntersectionOut])
+@app.get("/get_all_intersections", response_model=List[IntersectionOut], tags=["intersections"])
 def get_all_intersections():
     db: Session = SessionLocal()
     intersections = db.query(Intersection).all()
     db.close()
     return intersections
 
-@app.get("/intersections/{intersection_id}", response_model=IntersectionWithIQRF)
+@app.get("/get_intersection_byID/{intersection_id}", response_model=IntersectionWithIQRF, tags=["intersections"])
 def get_intersection_by_id(intersection_id: int):
     db: Session = SessionLocal()
     
@@ -363,17 +347,27 @@ def get_intersection_by_id(intersection_id: int):
         "iqrf_devices": iqrf_list
     }
     
-@app.post("/intersections", response_model=IntersectionOut)
-def create_intersection(intersection: IntersectionCreate):
+    
+@app.get("/get_intersection_with_lights_byID/{intersection_id}", response_model=IntersectionWithMinimalIQRF, tags=["intersections"])
+def get_intersection_with_lights_by_id(intersection_id: int):
     db: Session = SessionLocal()
-    db_intersection = Intersection(id=intersection.id, name=intersection.name)
-    db.add(db_intersection)
-    db.commit()
-    db.refresh(db_intersection)
-    db.close()
-    return db_intersection
+    
+    intersection = db.query(Intersection).filter(Intersection.id == intersection_id).first()
+    if not intersection:
+        db.close()
+        raise HTTPException(status_code=404, detail="Intersection not found")
 
-@app.delete("/intersections/{intersection_id}")
+    iqrf_list = db.query(IQRF).filter(IQRF.intersection == intersection_id).all()
+
+    db.close()
+
+    return {
+        "id": intersection.id,
+        "name": intersection.name,
+        "iqrf_devices": iqrf_list
+    }
+
+@app.delete("/delete_intersection_byID/{intersection_id}", tags=["intersections"])
 def delete_intersection(intersection_id: int):
     db: Session = SessionLocal()
     intersection = db.query(Intersection).filter(Intersection.id == intersection_id).first()
@@ -422,12 +416,21 @@ def get_config():
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError):
-    if "FOREIGN KEY constraint failed" in str(exc.orig):
+    error_message = str(exc.orig)
+
+    if "FOREIGN KEY constraint failed" in error_message:
         return JSONResponse(
             status_code=400,
-            content={"detail": "Cannot delete: Constrained by Foreign Keys in /iqrf"},
+            content={"detail": "Cannot create or delete: Foreign Key constraint violation."},
         )
+
+    if "UNIQUE constraint failed" in error_message or "duplicate key value violates unique constraint" in error_message:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Duplicate ID or unique field value. The record already exists."},
+        )
+
     return JSONResponse(
         status_code=500,
-        content={"detail": "Database integrity error"},
+        content={"detail": f"Database integrity error: {error_message}"},
     )

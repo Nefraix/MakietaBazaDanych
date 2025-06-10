@@ -45,17 +45,22 @@ sudo systemctl disable fastapi.service / sudo systemctl enable fastapi.service
 
 Adresy przykładowe, sprawdz /Desktop/ po uruchomieniu skryptu żeby sprawdzić IP raspberry
 
-http://192.168.1.190:8040/groups/13
-http://192.168.1.190:8040/items
-http://192.168.1.190:8040/iqrf
+http://192.168.1.100:8040/groups/13
+http://192.168.1.100:8040/items
+http://192.168.1.100:8040/iqrf
 
-curl -X GET http://192.168.1.190:8040/groups/13
-curl -X POST http://192.168.1.190:8040/iqrf -H \
+curl -X GET http://192.168.1.100:8040/groups/13
+curl -X POST http://192.168.1.100:8040/iqrf -H \
 "Content-Type: application/json" -d \
 '{"id": 1,"group": 1, "description": "Test"}'
 
-curl -X POST http://192.168.1.190:8040/groups -H \
+curl -X POST http://192.168.1.100:8040/groups -H \
 "Content-Type: application/json" -d \
 '{"id": 19, "description": "Test"}'
+
+
+Automatyczne backupy za pomoca backup.sh i crontab
+crontab -e
+automatycznie co 15 minut
 
 

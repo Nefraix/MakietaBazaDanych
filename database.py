@@ -29,15 +29,15 @@ groups = [
 ]
 
 commands = [
-    Command(id=0, name="Automatyczna jazda w prawo", code="0001"),
-    Command(id=1, name="Automatyczna jazda w lewo", code="0002"),
-    Command(id=2, name="Blokada poruszania się w prawo", code="0003"), 
-    Command(id=3, name="Blokada poruszania się w lewo", code="0004"),
-    Command(id=4, name="Ustaw prędkość na", code="0005"),
-    Command(id=5, name="Zmień prędkość o", code="0006"),
-    Command(id=6, name="Stopniowe zatrzymanie się", code="0007"),
-    Command(id=7, name="Nagłe zatrzymanie się", code="0008"),
-    Command(id=8, name="Blokada parkowania", code="0009"),
+    Command(id=0, name="Automatyczna jazda w prawo", code="jprawo"),
+    Command(id=1, name="Automatyczna jazda w lewo", code="jlewo"),
+    Command(id=2, name="Blokada poruszania się w prawo", code="prawo"), 
+    Command(id=3, name="Blokada poruszania się w lewo", code="lewo"),
+    Command(id=4, name="Ustaw prędkość na", code="ustawLiczba"),
+    Command(id=5, name="Zmień prędkość o", code="zmienLiczba"),
+    Command(id=6, name="Stopniowe zatrzymanie się", code="slowstop"),
+    Command(id=7, name="Nagłe zatrzymanie się", code="stop"),
+    Command(id=8, name="Blokada parkowania", code="blokada"),
 ]
 
 situations = [
