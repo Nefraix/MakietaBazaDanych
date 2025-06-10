@@ -5,11 +5,71 @@ from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import IntegrityError
+import json
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+import logging
+import time
+import os
+
+os.makedirs("logs", exist_ok=True)
+
+log_file_path = "logs/logs.txt"
+
+# Delete the log file if it exists
+if os.path.exists(log_file_path):
+    os.remove(log_file_path)
+
 
 from models import Base, IQRF, Group, Situation, Command, Intersection
 from schemas import *
 from database import SessionLocal, init_db
 
+# Set up logger
+logger = logging.getLogger("app_logger")
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler(log_file_path)
+formatter = logging.Formatter('%(asctime)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        try:
+            response = await call_next(request)
+            # Try reading the response body (requires capturing it first)
+            response_body = b""
+            async for chunk in response.body_iterator:
+                response_body += chunk
+            # Clone new response to preserve original output
+            new_response = Response(
+                content=response_body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type
+            )
+
+            duration = time.time() - start_time
+            msg = f"{request.method} {request.url.path} -> Status: {response.status_code} - Duration: {duration:.3f}s"
+
+            # Try to extract error detail from response body
+            if response.status_code >= 400:
+                try:
+                    body_data = json.loads(response_body)
+                    if "detail" in body_data:
+                        msg += f" - Detail: {body_data['detail']}"
+                except Exception:
+                    pass  # In case body isn't JSON
+
+            logger.info(msg)
+            return new_response
+
+        except Exception as e:
+            logger.error(f"Unhandled error in middleware: {e}")
+            raise e
+        
 tags_metadata = [
     {
         "name": "iqrf",
@@ -41,6 +101,7 @@ app = FastAPI(
     version="1.0.0",
     openapi_tags=tags_metadata)
 
+app.add_middleware(LoggingMiddleware)
 
 
 init_db()
@@ -201,6 +262,17 @@ def create_iqrf(iqrf: IQRFCreate):
     db.close()
     return db_iqrf
 
+@app.post("/post_iqrf_change_led", tags=["iqrf"])
+def post_iqrf_change_led(update: IQRFUpdateLED):
+    db =SessionLocal()
+    iqrf = db.query(IQRF).filter(IQRF.id == update.id).first()
+    if not iqrf:
+        raise HTTPException(status_code=404, detail="IQRF device not found")
+
+    iqrf.lights = update.lights
+    db.commit()
+    db.refresh(iqrf)
+
 @app.get("/get_all_iqrfs", response_model=List[IQRFOut], tags=["iqrf"])
 def read_iqrf():
     db = SessionLocal()
@@ -216,6 +288,15 @@ def read_iqrf_by_id(iqrf_id: int):
     if iqrf is None:
         raise HTTPException(status_code=404, detail="IQRF record not found")
     return iqrf
+
+@app.get("/get_iqrf_LED_byID/{iqrf_id}", response_model=IQRFUpdateLED, tags=["iqrf"])
+def read_iqrf_by_id(iqrf_id: int):
+    db = SessionLocal()
+    iqrf = db.query(IQRF).filter(IQRF.id == iqrf_id).first()
+    db.close()
+    if iqrf is None:
+        raise HTTPException(status_code=404, detail="IQRF record not found")
+    return IQRFUpdateLED(id=iqrf.id, lights=iqrf.lights)
     
 @app.delete("/delete_iqrf_byID/{iqrf_id}", tags=["iqrf"])
 def delete_iqrf(iqrf_id: int):
