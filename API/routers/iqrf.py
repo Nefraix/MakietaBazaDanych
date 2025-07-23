@@ -10,10 +10,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from API.database import models, database
-from API.schemas import *
+from ..db import models, database
+from ..schemas import *
 
-from FastAPI import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 
 router = APIRouter(

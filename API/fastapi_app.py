@@ -13,10 +13,10 @@ import logging
 import time
 import os
 
-
-from API.database import models, database
 from API.schemas import *
-from database import SessionLocal, init_db
+from API.db import models, database
+from API.routers import iqrf, commands, intersections, groups, situations
+
 
 os.makedirs("logs", exist_ok=True)
 
@@ -110,8 +110,13 @@ app = FastAPI(
 
 app.add_middleware(LoggingMiddleware)
 
+app.include_router(iqrf.router)
+app.include_router(intersections.router)
+app.include_router(groups.router)
+app.include_router(situations.router)
+app.include_router(commands.router)
 
-init_db()
+database.init_db()
 
 
 
