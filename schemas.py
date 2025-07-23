@@ -40,7 +40,7 @@ class IQRFMinimal(BaseModel):
         
 class IQRFUpdateLED(BaseModel):
     id: int
-    lights: int  # adjust type depending on your schema (e.g., List[str] or JSON)
+    lights: int
 
 " ---------- Pydantic Group ----------"
 
