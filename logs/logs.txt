@@ -1,2 +1,0 @@
-2025-07-15 13:22:08,965 - GET /docs -> Status: 200 - Duration: 0.001s
-2025-07-15 13:22:09,161 - GET /openapi.json -> Status: 200 - Duration: 0.025s
